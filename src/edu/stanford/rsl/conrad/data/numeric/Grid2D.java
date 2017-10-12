@@ -256,7 +256,10 @@ public class Grid2D extends NumericGrid implements Transformable {
 	 * @param value The value to set
 	 */
 	public void putPixelValue(int x, int y, float value) {
-		if (y>=size[1] || x >= size[0]) return; 
+		if (y>=size[1] || x >= size[0]) {
+			System.out.println("THIS IS ILLEGAL STOP IT ...DIMENSION ARE FALSE");
+			return; 
+		}
 		this.buffer[y*this.size[0]+x]=value;
 		notifyAfterWrite();
 	}

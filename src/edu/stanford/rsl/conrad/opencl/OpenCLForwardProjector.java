@@ -700,9 +700,9 @@ public class OpenCLForwardProjector implements GUIConfigurable, Citeable {
 	 */
 	@Override
 	public void configure() throws Exception {
-		obtainGeometryFromVolume = UserUtil.queryBoolean("Try to obtain volume parameters from ImagePlus/Grid3D (Otherwise from configuration)?");
+		//obtainGeometryFromVolume = UserUtil.queryBoolean("Try to obtain volume parameters from ImagePlus/Grid3D (Otherwise from configuration)?");
 		Configuration config = Configuration.getGlobalConfiguration();
-		
+		obtainGeometryFromVolume = false;
 		if (!obtainGeometryFromVolume){
 			voxelSize = new float [3];
 			volumeSize = new float [3];

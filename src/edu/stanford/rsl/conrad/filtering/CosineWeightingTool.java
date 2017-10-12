@@ -28,7 +28,7 @@ public class CosineWeightingTool extends IndividualImageFilteringTool {
 	double sourceToDetectorDistance = 0;
 	double sourceToAxisDistance = 0;
 
-	private boolean weightsAvailable = false;
+	private boolean weightsAvailable = true;
 
 
 	/**

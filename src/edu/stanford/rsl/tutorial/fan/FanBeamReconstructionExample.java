@@ -2,8 +2,11 @@ package edu.stanford.rsl.tutorial.fan;
 
 import ij.ImageJ;
 import edu.stanford.rsl.conrad.data.numeric.Grid2D;
+import edu.stanford.rsl.conrad.data.numeric.Grid2DComplex;
 import edu.stanford.rsl.conrad.data.numeric.NumericGrid;
 import edu.stanford.rsl.conrad.data.numeric.NumericPointwiseOperators;
+import edu.stanford.rsl.conrad.filtering.redundancy.ParkerWeightingTool;
+import edu.stanford.rsl.conrad.utils.CONRAD;
 import edu.stanford.rsl.tutorial.fan.FanBeamBackprojector2D;
 import edu.stanford.rsl.tutorial.fan.FanBeamProjector2D;
 import edu.stanford.rsl.tutorial.fan.redundancy.BinaryWeights;
@@ -30,24 +33,61 @@ public class FanBeamReconstructionExample {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		CONRAD.setup();
+		
+		ParkerWeightingTool pwt = new ParkerWeightingTool();
+	
+		try {
+			pwt.configure();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		// image params
 		int imgSzXMM = 512, // [mm]
 		imgSzYMM = imgSzXMM; // [mm]
 		float pxSzXMM = 1.0f, // [mm]
 		pxSzYMM = pxSzXMM; // [mm]
 		// fan beam bp parameters
-		double gammaM = 11.768288932020647*Math.PI/180, 
-				maxT = 500, 
-				deltaT = 1.0, 
-				focalLength = (maxT/2.0-0.5)*deltaT/Math.tan(gammaM),
-				maxBeta = 285.95*Math.PI/180,//+gammaM*2, 
-				deltaBeta = maxBeta / 132;
+		
+		int numProj = 1600;
+		double focalLength = 1350;
+		double maxT =700;
+		double deltaT = 1.0;
+		double gammaM = Math.atan((maxT/2.0)/focalLength);
+		double maxBeta = Math.PI+2*gammaM;
+		double deltaBeta = maxBeta/numProj;
+		
 
-		System.out.println(gammaM*180/Math.PI);
+		///// compute primary angle
+		double[] primary_angles = new double[numProj];
+		for(int i =0;i <primary_angles.length; i++) {
+			primary_angles[i] = Math.toDegrees(deltaBeta*i);				
+		}
 
-		int phantomType = 0; // 0 = circle, 1 = MickeyMouse, 2 = TestObject1,
+		pwt.setNumberOfProjections(numProj);
+		pwt.setDetectorWidth((int)maxT);
+		pwt.setPixelDimensionX(deltaT);
+		pwt.setSourceToDetectorDistance(focalLength);
+		pwt.setPrimaryAngles(primary_angles);
+		
+		
+		Grid2D pw = new Grid2D((int) maxT,numProj);
+		
+		
+		for(int i = 0 ; i< numProj; i++) {
+			double[] parker = pwt.computeParkerWeights1D(i);
+			for(int j = 0 ; j<parker.length;j++) {
+				pw.getSubGrid(i).setAtIndex(j, (float) parker[j]); ;
+			}
+		}
+		pw.show("parker weights using pwt");
+		
+
+		int phantomType = 2; // 0 = circle, 1 = MickeyMouse, 2 = TestObject1,
 		// 3=DotsGrid
-		// size in grid units
+		// size in grid unit
+		
 		int imgSzXGU = (int) Math.floor(imgSzXMM / pxSzXMM), // [GU]
 		imgSzYGU = (int) Math.floor(imgSzYMM / pxSzYMM); // [GU]
 		new ImageJ();
@@ -63,11 +103,9 @@ public class FanBeamReconstructionExample {
 		case 1:
 			phantom = new MickeyMouseGrid2D(imgSzXGU, imgSzYGU);
 			break;
-
 		case 2:
 			phantom = new TestObject1(imgSzXGU, imgSzYGU);
 			break;
-
 		case 3:
 			phantom = new DotsGrid2D(imgSzXGU, imgSzYGU);
 			break;
@@ -76,22 +114,27 @@ public class FanBeamReconstructionExample {
 			break;
 		}
 
-
 		phantom.setSpacing(pxSzXMM, pxSzYMM);
 		// origin is given in (negative) world coordinates
 		phantom.setOrigin(-(imgSzXGU * phantom.getSpacing()[0]) / 2, -(imgSzYGU * phantom.getSpacing()[1]) / 2);
 		//phantom.setOrigin(-50.0, -50.0);
 
 		phantom.show();
-		Grid2D projectionP = new Grid2D(phantom);
-		
+		Grid2D projectionP = new Grid2D(phantom);		
 		
 		for (int iter =0; iter < 1; iter ++) {
 			// create projections
 			Grid2D fanBeamSinoRay = fanBeamProjector.projectRayDrivenCL(projectionP);
+			
+			Grid2DComplex sino_fft = new Grid2DComplex(fanBeamSinoRay);
+			sino_fft.transformForward();
+			sino_fft.fftshift();
+			sino_fft.show("fft of sinogram");
+			
+			
 			fanBeamSinoRay.clone().show("Sinogram");
 
-			int weightType = 0;
+			int weightType = 2;
 			
 			Grid2D RedundancyWeights;
 			switch (weightType) {
@@ -113,19 +156,14 @@ public class FanBeamReconstructionExample {
 			
 			RedundancyWeights.show("Current Weight");
 
-			NumericPointwiseOperators.multiplyBy(fanBeamSinoRay, RedundancyWeights);
-			
 			RamLakKernel ramLak = new RamLakKernel((int) (maxT / deltaT), deltaT);
 			CosineFilter cKern = new CosineFilter(focalLength, maxT, deltaT);
 			// Apply filtering
 			for (int theta = 0; theta < fanBeamSinoRay.getSize()[1]; ++theta) {
 				cKern.applyToGrid(fanBeamSinoRay.getSubGrid(theta));
-
-			}
-
-			for (int theta = 0; theta < fanBeamSinoRay.getSize()[1]; ++theta) {
 				ramLak.applyToGrid(fanBeamSinoRay.getSubGrid(theta));
 			}
+			NumericPointwiseOperators.multiplyBy(fanBeamSinoRay, pw);
 			
 			fanBeamSinoRay.show("After Filtering");
 			
@@ -135,8 +173,7 @@ public class FanBeamReconstructionExample {
 
 			Grid2D reco = fbp.backprojectPixelDrivenCL(fanBeamSinoRay);
 			reco.show("Parker" + iter);
-			
-			
+
 			NumericGrid recoDiff = NumericPointwiseOperators.subtractedBy(phantom, reco);
 			recoDiff.show("RecoDiff" + iter);
 		}

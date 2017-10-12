@@ -82,7 +82,7 @@ public class ParallelImageFilterPipeliner {
 				int blockStart  = getIndividualProjectionFilterBlockLength(tools, currentTool);
 				if (blockStart >= 0) {
 					ParallelImageFilterSink parallel = new ParallelImageFilterSink();
-					parallel.setShowStatus(false);
+					parallel.setShowStatus(showStatus);
 					parallel.setSink(currentSink);
 					parallel.setPipeline(ParallelImageFilterPipeliner.getSubPipeline(tools, blockStart, currentTool+1));
 					parallel.setDebug(debug);
