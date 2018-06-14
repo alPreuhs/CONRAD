@@ -16,8 +16,8 @@ package edu.stanford.rsl.tutorial.test;
 public class CharacterEncodingTest {
 
 	public static void main(String[] args) {
-		int umlautü = 10;
-		System.out.println("UTF8 correctly configured: " + umlautü);
+		int umlaut = 10;
+		System.out.println("UTF8 correctly configured: " + umlaut);
 	}
 
 }

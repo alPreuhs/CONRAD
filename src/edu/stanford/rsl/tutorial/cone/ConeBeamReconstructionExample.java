@@ -1,15 +1,12 @@
 package edu.stanford.rsl.tutorial.cone;
 
 
-import ij.ImageJ;
 import edu.stanford.rsl.conrad.data.numeric.Grid3D;
-import edu.stanford.rsl.conrad.data.numeric.NumericPointwiseOperators;
 import edu.stanford.rsl.conrad.geometry.trajectories.Trajectory;
 import edu.stanford.rsl.conrad.phantom.NumericalSheppLogan3D;
 import edu.stanford.rsl.conrad.utils.Configuration;
-import edu.stanford.rsl.tutorial.cone.ConeBeamBackprojector;
-import edu.stanford.rsl.tutorial.cone.ConeBeamCosineFilter;
 import edu.stanford.rsl.tutorial.filters.RamLakKernel;
+import ij.ImageJ;
 
 /**
  * Simple example that computes and displays a cone-beam reconstruction.
@@ -40,6 +37,7 @@ public class ConeBeamReconstructionExample {
 		int imgSizeY = geo.getReconDimensionY();
 		int imgSizeZ = geo.getReconDimensionZ();
 		//Phantom3D test3D = new Sphere3D(imgSizeX, imgSizeY, imgSizeZ);
+		System.out.println("Before shepp logan creation");
 		Grid3D test3D = new NumericalSheppLogan3D(imgSizeX,
 				imgSizeY, imgSizeZ).getNumericalSheppLoganPhantom();
 		// Alternate Phantom
@@ -47,6 +45,7 @@ public class ConeBeamReconstructionExample {
 		 * NumericalSheppLogan3D shepp3d = new NumericalSheppLogan3D(imgSizeX,
 				imgSizeY, imgSizeZ);
 		 */
+		System.out.println("shepp logan created");
 		Grid3D grid = test3D;
 		grid.show("object");
 
@@ -58,8 +57,7 @@ public class ConeBeamReconstructionExample {
 			System.out.println(e);
 			return;
 		}
-		
-		
+
 		ConeBeamCosineFilter cbFilter = new ConeBeamCosineFilter(focalLength, maxU, maxV, deltaU, deltaV);
 		RamLakKernel ramK = new RamLakKernel(maxU_PX, deltaU);
 		for (int i = 0; i < geo.getProjectionStackSize(); ++i) {
@@ -75,8 +73,6 @@ public class ConeBeamReconstructionExample {
 		recImage.show("recImage");
 		if (true)
 			return;
-	
-
 	}
 }
 /*

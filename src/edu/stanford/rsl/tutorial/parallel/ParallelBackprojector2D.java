@@ -189,7 +189,7 @@ public class ParallelBackprojector2D {
 					// get interpolated value
 					float val = InterpolationOperators.interpolateLinear(subgrid, s);
 					// sum value to sinogram
-					grid.addAtIndex(x, y, val);
+					grid.addAtIndex(y, x, val);//FIXME it was x,y.....
 				}
 
 			}

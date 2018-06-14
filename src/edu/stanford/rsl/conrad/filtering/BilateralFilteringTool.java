@@ -9,9 +9,9 @@ public class BilateralFilteringTool extends IndividualImageFilteringTool {
 	 * 
 	 */
 	private static final long serialVersionUID = 8308762121723928775L;
-	private double sigma_d = 2.0;
-	private double sigma_r = 0.001;
-	private int width = 5;
+	public double sigma_d = 2.0;
+	public double sigma_r = 0.001;
+	public int width = 5;
 
 	@Override
 	public IndividualImageFilteringTool clone() {
